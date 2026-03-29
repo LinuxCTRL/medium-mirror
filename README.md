@@ -33,7 +33,7 @@ A modern, distraction-free article reader and library manager for Medium content
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/medium-mirror.git
+   git clone https://github.com/LinuxCTRL/medium-mirror.git
    cd medium-mirror
    ```
 
