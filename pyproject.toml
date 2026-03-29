@@ -1,0 +1,18 @@
+[project]
+name = "python"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "aiosqlite>=0.22.1",
+    "beautifulsoup4>=4.14.3",
+    "fastapi>=0.135.2",
+    "httpx[http2]>=0.28.1",
+    "jinja2>=3.1.6",
+    "playwright>=1.58.0",
+    "playwright-stealth>=2.0.2",
+    "pydantic-settings>=2.13.1",
+    "sqlalchemy>=2.0.48",
+    "uvicorn>=0.42.0",
+]

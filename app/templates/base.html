@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Medium Mirror{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        indigo: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                            950: '#1e1b4b',
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <script>
+        // Theme initialization
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .serif { font-family: 'Lora', serif; }
+        
+        /* Light Mode Styles (Explicit) */
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(229, 231, 235, 0.5); }
+        
+        /* Dark Mode Styles (Explicit) */
+        .dark .glass { background: rgba(0, 0, 0, 0.8) !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important; }
+        .dark body { background-color: #000000 !important; color: #f8fafc !important; }
+        
+        .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(229, 231, 235, 1); }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
+        
+        /* Dark Mode Card Specifics */
+        .dark .card-hover { border: 1px solid rgba(255, 255, 255, 0.05) !important; background: rgba(255, 255, 255, 0.02) !important; box-shadow: none !important; }
+        .dark .card-hover:hover { border: 1px solid rgba(255, 255, 255, 0.15) !important; background: rgba(255, 255, 255, 0.04) !important; }
+
+        /* Skeleton Animation */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+        }
+        .dark .skeleton {
+            background: linear-gradient(90deg, #18181b 25%, #27272a 50%, #18181b 75%) !important;
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-[#FAFAFA] dark:bg-black text-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-300">
+    <!-- Navbar -->
+    <nav class="glass sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="/" class="flex items-center gap-2 group">
+                <div class="bg-indigo-600 p-2 rounded-lg text-white group-hover:rotate-12 transition-transform shadow-lg shadow-indigo-500/20">
+                    <i data-lucide="book-open" class="w-6 h-6"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tight">Medium<span class="text-indigo-600">Mirror</span></span>
+            </a>
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-400">
+                <a href="/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Discover</a>
+                <a href="/search?q=tech" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Technology</a>
+                <a href="/search?q=design" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Design</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="p-2.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all text-slate-500 dark:text-slate-400 active:scale-90" title="Toggle Theme">
+                    <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
+                    <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                </button>
+                <button class="bg-indigo-600 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 active:scale-95">
+                    Sign Up
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-black border-t border-slate-200 dark:border-white/5 mt-20 py-12 px-6 transition-colors">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="col-span-1 md:col-span-2">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="bg-indigo-600 p-1.5 rounded text-white shadow-lg shadow-indigo-500/20">
+                        <i data-lucide="book-open" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-lg font-bold tracking-tight dark:text-white">MediumMirror</span>
+                </div>
+                <p class="text-slate-500 dark:text-slate-400 max-w-sm text-sm">
+                    A modern article reader designed for focus and clarity. Bypass paywalls and read your favorite content in a beautiful, distraction-free environment.
+                </p>
+            </div>
+            <div>
+                <h4 class="font-bold mb-4 text-sm uppercase tracking-widest text-slate-400 dark:text-slate-500">Links</h4>
+                <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                    <li><a href="/" class="hover:text-indigo-600 dark:hover:text-indigo-400">Home</a></li>
+                    <li><a href="/admin" class="hover:text-indigo-600 dark:hover:text-indigo-400">Admin Panel</a></li>
+                    <li><a href="#" class="hover:text-indigo-600 dark:hover:text-indigo-400">Privacy</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold mb-4 text-sm uppercase tracking-widest text-slate-400 dark:text-slate-500">Social</h4>
+                <div class="flex gap-4">
+                    <a href="#" class="text-slate-400 hover:text-indigo-600 transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+                    <a href="#" class="text-slate-400 hover:text-indigo-600 transition-colors"><i data-lucide="github" class="w-5 h-5"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto border-t border-slate-100 dark:border-white/5 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-400 dark:text-slate-600">
+            <p>&copy; 2026 Medium Mirror. Built with Python & Love.</p>
+            <p>Content mirrored via Freedium.</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

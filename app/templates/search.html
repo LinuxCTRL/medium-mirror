@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results for "{{ q }}" - Medium Mirror{% endblock %}
+
+{% block content %}
+<section class="py-12 px-6 max-w-7xl mx-auto dark:bg-black transition-colors">
+    <div class="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div>
+            <nav class="flex text-sm text-slate-500 dark:text-slate-400 mb-4 items-center gap-2">
+                <a href="/" class="hover:text-indigo-600 dark:hover:text-indigo-400">Home</a>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                <span>Search</span>
+            </nav>
+            <h1 class="text-4xl font-bold tracking-tight dark:text-white">Results for "{{ q }}"</h1>
+            <p class="text-slate-500 dark:text-slate-400 mt-2">Found {{ results|length }} potential matches across Medium</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <div class="flex items-center bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 gap-3">
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Depth</label>
+                <select id="refineDepth" onchange="refineSearch()" class="bg-transparent text-sm font-bold text-slate-900 dark:text-white focus:outline-none">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                </select>
+            </div>
+            <button onclick="bulkFetch()" id="bulkBtn"
+                    class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20">
+                <i data-lucide="layers" class="w-4 h-4"></i>
+                Bulk Fetch All
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Set initial depth select value from URL
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const depth = params.get('depth') || '5';
+            document.getElementById('refineDepth').value = depth;
+        });
+
+        function refineSearch() {
+            const depth = document.getElementById('refineDepth').value;
+            const q = "{{ q }}";
+            window.location.href = `/search?q=${encodeURIComponent(q)}&depth=${depth}`;
+        }
+
+        async function bulkFetch() {
+            const results = {{ results | tojson }};
+            if (!results.length) return;
+
+            const btn = document.getElementById('bulkBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            
+            showModal('Bulk Fetch Started', `Processing ${results.length} articles. This may take a minute. Please don't close this tab.`, 'info');
+
+            let successCount = 0;
+            for (let i = 0; i < results.length; i++) {
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processing ${i+1}/${results.length}`;
+                lucide.createIcons();
+                
+                try {
+                    const response = await fetch('/api/v1/fetch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: results[i].url })
+                    });
+                    if (response.ok) successCount++;
+                } catch (e) {
+                    console.error("Failed to fetch:", results[i].url);
+                }
+            }
+
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            lucide.createIcons();
+            
+            showModal('Bulk Fetch Complete', `Successfully added ${successCount} articles to your library.`, 'check-circle');
+        }
+    </script>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for item in results %}
+        <div class="card-hover bg-white dark:bg-white/5 rounded-3xl overflow-hidden border border-slate-100 dark:border-white/5 flex flex-col group p-8">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xs font-bold">
+                    {{ (item.author or 'A')[0].upper() }}
+                </div>
+                <div class="text-sm">
+                    <span class="font-bold text-slate-900 dark:text-white">{{ item.author or 'Medium Writer' }}</span>
+                </div>
+            </div>
+            
+            <h3 class="serif text-2xl font-bold leading-snug mb-4 dark:text-white">
+                {{ item.title }}
+            </h3>
+            
+            <p class="text-slate-500 dark:text-slate-400 text-sm line-clamp-3 leading-relaxed mb-8 flex-1">
+                Explore this story on Medium. You can fetch it into your local library for a distraction-free reading experience.
+            </p>
+            
+            <div class="flex gap-4">
+                <button onclick="directFetch('{{ item.url }}', this)" 
+                        class="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold text-sm hover:bg-indigo-700 dark:hover:bg-indigo-500 transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    Fetch Story
+                </button>
+                <a href="{{ item.url }}" target="_blank" 
+                   class="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-slate-500 rounded-xl hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors border dark:border-white/5" title="View Original">
+                    <i data-lucide="external-link" class="w-5 h-5"></i>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not results %}
+    <div class="text-center py-20 bg-slate-50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10">
+        <div class="bg-white dark:bg-white/10 w-16 h-16 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-6 text-slate-400">
+            <i data-lucide="search-x" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">No results found</h3>
+        <p class="text-slate-500 dark:text-slate-400">Try different keywords or a direct Medium URL.</p>
+        <a href="/" class="mt-6 inline-block text-indigo-600 dark:text-indigo-400 font-bold hover:underline">Back to library</a>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Reuse Custom Modal from index.html (Already in base.html if we moved it, but let's assume it's needed) -->
+<div id="customModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm hidden">
+    <div class="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-300 border dark:border-white/10">
+        <div class="p-8 text-center">
+            <div id="modalIconContainer" class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="info" class="w-6 h-6"></i>
+            </div>
+            <h3 id="modalTitle" class="text-xl font-bold mb-2 dark:text-white">Notice</h3>
+            <p id="modalBody" class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Body text goes here.</p>
+        </div>
+        <div class="flex border-t border-slate-100 dark:border-white/10" id="modalButtons"></div>
+    </div>
+</div>
+
+<script>
+    function showModal(title, body, icon = 'info') {
+        const modal = document.getElementById('customModal');
+        const titleEl = document.getElementById('modalTitle');
+        const bodyEl = document.getElementById('modalBody');
+        const buttonsEl = document.getElementById('modalButtons');
+        const iconContainer = document.getElementById('modalIconContainer');
+
+        titleEl.innerText = title;
+        bodyEl.innerText = body;
+        buttonsEl.innerHTML = '<button onclick="document.getElementById(\'customModal\').classList.add(\'hidden\')" class="flex-1 py-4 text-sm font-bold text-indigo-600 hover:bg-slate-50 transition-colors">Got it</button>'; 
+        iconContainer.innerHTML = `<i data-lucide="${icon}" class="w-6 h-6"></i>`;
+        lucide.createIcons();
+        modal.classList.remove('hidden');
+    }
+
+    async function directFetch(url, button) {
+        const originalHtml = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Fetching...';
+
+        try {
+            const response = await fetch('/api/v1/fetch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+
+            if (response.ok) {
+                const article = await response.json();
+                window.location.href = `/v/${article.id}`;
+            } else {
+                const error = await response.json();
+                showModal('Fetch Error', error.detail || 'Could not fetch article content.', 'alert-circle');
+                button.disabled = false;
+                button.innerHTML = originalHtml;
+            }
+        } catch (err) {
+            showModal('Error', 'An unexpected error occurred.', 'alert-circle');
+            button.disabled = false;
+            button.innerHTML = originalHtml;
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Discover - Medium Mirror{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="py-16 px-6 bg-white dark:bg-black border-b border-slate-100 dark:border-white/5 transition-colors">
+    <div class="max-w-4xl mx-auto text-center">
+        <h1 class="serif text-5xl md:text-6xl font-bold mb-6 tracking-tight dark:text-white text-slate-900">Stay curious.</h1>
+        <p class="text-xl text-slate-500 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+            Discover stories, thinking, and expertise from writers on any topic. Paste a Medium URL or search for keywords to start reading.
+        </p>
+        
+        <div class="relative max-w-2xl mx-auto group">
+            <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors">
+                <i data-lucide="link" class="w-5 h-5"></i>
+            </div>
+            <input type="url" id="mediumUrl" 
+                   placeholder="https://medium.com/@username/article-slug or keywords..." 
+                   class="w-full pl-12 pr-48 py-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-50 dark:focus:ring-indigo-900/20 focus:border-indigo-600 dark:focus:border-indigo-500 transition-all text-lg shadow-sm dark:text-white">
+            
+            <div class="absolute right-2 inset-y-2 flex items-center gap-2">
+                <select id="depth" class="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-xl px-2 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+                    <option value="1">Depth 1</option>
+                    <option value="2">Depth 2</option>
+                    <option value="3">Depth 3</option>
+                    <option value="5" selected>Depth 5</option>
+                    <option value="10">Depth 10</option>
+                </select>
+                <button onclick="fetchArticle()" 
+                        class="bg-indigo-600 text-white px-5 rounded-xl font-semibold hover:bg-indigo-700 dark:hover:bg-indigo-500 transition-all h-full active:scale-95 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2">
+                    <span id="btnText">Fetch</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div id="fetchStatus" class="mt-4 text-sm font-medium text-indigo-600 dark:text-indigo-400 hidden flex items-center justify-center gap-2">
+            <div class="w-4 h-4 border-2 border-indigo-600 dark:border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+            Searching across the multiverse...
+        </div>
+    </div>
+</section>
+
+<!-- Articles Section -->
+<section class="py-12 px-6 max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+        <div>
+            <h2 class="text-3xl font-bold tracking-tight dark:text-white text-slate-900">Latest Stories</h2>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Refreshed just now from your personal library</p>
+        </div>
+        
+        <form action="/" method="GET" class="relative group w-full md:w-auto">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors"></i>
+            <input type="text" name="q" placeholder="Filter by title..." value="{{ q or '' }}" 
+                   class="pl-10 pr-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 focus:border-indigo-600 dark:focus:border-indigo-500 transition-all w-full dark:text-white">
+            {% if q %}
+                <a href="/" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-tighter">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Article Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="articleGrid">
+        {% for article in articles %}
+        <div class="card-hover bg-white dark:bg-white/5 rounded-3xl overflow-hidden border border-slate-100 dark:border-white/5 flex flex-col group" id="article-{{ article.id }}">
+            <div class="p-8 flex-1">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xs font-bold">
+                        {{ (article.author or 'A')[0].upper() }}
+                    </div>
+                    <div class="text-sm">
+                        <span class="font-bold text-slate-900 dark:text-slate-100">{{ article.author or 'Anonymous' }}</span>
+                        <span class="text-slate-400 mx-1">•</span>
+                        <span class="text-slate-400">{{ article.created_at.strftime('%b %d') if article.created_at else 'N/A' }}</span>
+                    </div>
+                </div>
+                
+                <a href="/v/{{ article.id }}" class="block group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    <h3 class="serif text-2xl font-bold leading-snug mb-3 dark:text-white text-slate-900">
+                        {{ article.title }}
+                    </h3>
+                </a>
+                
+                <p class="text-slate-500 dark:text-slate-400 text-sm line-clamp-3 leading-relaxed mb-6">
+                    Read the full mirrored version of this Medium story in a clean, distraction-free environment optimized for focus.
+                </p>
+            </div>
+            
+            <div class="px-8 py-6 bg-slate-50 dark:bg-white/5 border-t border-slate-100 dark:border-white/5 flex justify-between items-center mt-auto">
+                <a href="/v/{{ article.id }}" class="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1 uppercase tracking-wider">
+                    Read Full <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </a>
+                <button onclick="deleteArticle({{ article.id }})" class="p-2 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all" title="Delete Article">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not articles %}
+    <div class="text-center py-20 bg-slate-50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10">
+        <div class="bg-white dark:bg-white/10 w-16 h-16 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-6 text-slate-400">
+            <i data-lucide="ghost" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">No stories found</h3>
+        <p class="text-slate-500 dark:text-slate-400">Paste a URL above to start building your library.</p>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Custom Modal -->
+<div id="customModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm hidden animate-in fade-in duration-300">
+    <div class="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-300 border dark:border-white/10">
+        <div class="p-8 text-center">
+            <div id="modalIconContainer" class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="info" class="w-6 h-6"></i>
+            </div>
+            <h3 id="modalTitle" class="text-xl font-bold mb-2 dark:text-white">Notice</h3>
+            <p id="modalBody" class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Body text goes here.</p>
+        </div>
+        <div class="flex border-t border-slate-100 dark:border-white/10" id="modalButtons">
+            <!-- Dynamic buttons will appear here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    function showModal(title, body, isConfirm = false, onConfirm = null, icon = 'info') {
+        const modal = document.getElementById('customModal');
+        const titleEl = document.getElementById('modalTitle');
+        const bodyEl = document.getElementById('modalBody');
+        const buttonsEl = document.getElementById('modalButtons');
+        const iconContainer = document.getElementById('modalIconContainer');
+
+        titleEl.innerText = title;
+        bodyEl.innerText = body;
+        buttonsEl.innerHTML = ''; 
+        iconContainer.innerHTML = `<i data-lucide="${icon}" class="w-6 h-6"></i>`;
+        lucide.createIcons();
+
+        if (isConfirm) {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.innerText = 'Cancel';
+            cancelBtn.className = 'flex-1 py-4 text-sm font-bold text-slate-400 hover:bg-slate-50 transition-colors border-r border-slate-100';
+            cancelBtn.onclick = () => { modal.classList.add('hidden'); };
+            buttonsEl.appendChild(cancelBtn);
+
+            const confirmBtn = document.createElement('button');
+            confirmBtn.innerText = 'Confirm';
+            confirmBtn.className = 'flex-1 py-4 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors';
+            confirmBtn.onclick = () => {
+                modal.classList.add('hidden');
+                if (onConfirm) onConfirm();
+            };
+            buttonsEl.appendChild(confirmBtn);
+        } else {
+            const closeBtn = document.createElement('button');
+            closeBtn.innerText = 'Got it';
+            closeBtn.className = 'flex-1 py-4 text-sm font-bold text-indigo-600 hover:bg-slate-50 transition-colors';
+            closeBtn.onclick = () => { modal.classList.add('hidden'); };
+            buttonsEl.appendChild(closeBtn);
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    async function deleteArticle(articleId) {
+        showModal('Delete Permanently?', 'This action cannot be undone. The article will be removed from your local database.', true, async () => {
+            try {
+                const response = await fetch(`/api/v1/articles/${articleId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    const item = document.getElementById(`article-${articleId}`);
+                    item.classList.add('animate-out', 'zoom-out-95', 'fade-out', 'duration-300');
+                    setTimeout(() => item.remove(), 300);
+                } else {
+                    showModal('Error', 'Could not delete article from database.', false, null, 'alert-circle');
+                }
+            } catch (err) {
+                showModal('Error', 'An unexpected error occurred.', false, null, 'alert-circle');
+            }
+        }, 'trash-2');
+    }
+
+    async function fetchArticle() {
+        const urlInput = document.getElementById('mediumUrl');
+        const input = urlInput.value.trim();
+        if (!input) return showModal('Input Empty', 'Please enter a Medium URL or keywords to search.', false, null, 'search');
+
+        const isUrl = input.startsWith('http://') || input.startsWith('https://') || input.includes('medium.com/');
+
+        if (!isUrl) {
+            const depthValue = document.getElementById('depth').value;
+            window.location.href = `/search?q=${encodeURIComponent(input)}&depth=${depthValue}`;
+            return;
+        }
+
+        const button = document.querySelector('button[onclick="fetchArticle()"]');
+        const btnText = document.getElementById('btnText');
+        const status = document.getElementById('fetchStatus');
+        
+        button.disabled = true;
+        btnText.innerText = 'Fetching';
+        status.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/api/v1/fetch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: input })
+            });
+
+            if (response.ok) {
+                const article = await response.json();
+                window.location.href = `/v/${article.id}`;
+            } else {
+                const error = await response.json();
+                showModal('Fetch Error', error.detail || 'Could not fetch article content.', false, null, 'alert-circle');
+            }
+        } catch (err) {
+            showModal('Error', 'An error occurred during fetch.', false, null, 'alert-circle');
+        } finally {
+            button.disabled = false;
+            btnText.innerText = 'Fetch';
+            status.classList.add('hidden');
+        }
+    }
+
+    // Auto-focus input on mount
+    window.onload = () => {
+        document.getElementById('mediumUrl').focus();
+    }
+</script>
+{% endblock %}
